@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 
 # Mapper script for calculating the motif of a given set of DNA
 #
@@ -26,6 +26,8 @@ def main():
   data_set = open('promoters_data_clean.txt')
   sequences = get_sequences(data_set, 8)
 
+  # Write the DNA words to stdout to be picked up my
+  # hadoop streaming
   for sequence in sequences:
     print '%s\t%d' % (sequence, 1)
 
