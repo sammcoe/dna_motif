@@ -11,13 +11,20 @@ def get_map(file):
 
 def main():
  # temp = open("temp.txt")
-  motif = get_map(sys.stdin)
-  for current, group in groupby(motif, itemgetter(0)):
+  best_word = ""
+  best_count = 0
+  dataset = get_map(sys.stdin)
+  for current, group in groupby(dataset, itemgetter(0)):
     try:
-      best_word = sum(int(count) for current, count in group)
-      print "%s" % (best_word)
+      tally = sum(int(count) for current, count in group)
+      print "%s\t%s" % (tally, current)
+      if tally > best_count:
+        best_word = current
+        best_count = tally
     except ValueError:
       pass
+  print "Calculated Motif: %s.  Occurred %i times." % (best_word, best_count)
 
 if __name__ == "__main__":
   main()
+agtcu
