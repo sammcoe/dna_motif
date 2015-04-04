@@ -6,18 +6,21 @@
 # Website: samuelm.co
 
 import sys
+from array import array
 
 MOTIF_LEN = 8
 
 def get_sequences(data, length):
   start = 0
+  clean_data = data.replace('\n', '').replace('\r', '')
+
   # Increment through entire file, through every
   # possible sequence.
   # If the first line is 'tacatgact', then first pass is
   # 'tacatgac' and the second pass is 'acatgact'
   for char in data:
-    if len(data) >= (start + MOTIF_LEN):
-      yield data[start:length]
+    if len(data) > (start + MOTIF_LEN + 1):
+      yield '%s\t%i' % (data[start:length], start)
       start += 1
       length += 1
 
@@ -25,7 +28,7 @@ def sequence_perm():
   # This function produces a purmutation of all ~40k
   # codon combinations for a sequence of 8 bytes
   # composed of a, c, t, g, and u
-  codons = ['a','c','t','g','u']
+  codons = ['a','c','t','g']
 
   # The function treats the DNA sequences as a number
   # and uses a map to substitute the corresponding letters
@@ -36,8 +39,8 @@ def sequence_perm():
   # Since there are 5 DNA codons, we need to count up
   # to 8 digits of 4 (count is zero inclusive), so each
   # byte has 5 states.
-  while base < 44444444:
-    base += 1
+  while base <= 33333333:
+  # For testing locally: while base <= 00000010:
     # Pad the base number to get a string sequence
     conversion = str(base).zfill(8)
     index = 0
@@ -48,10 +51,10 @@ def sequence_perm():
     # This sequence repeats until no bytes are bumped
     # up to 5.
     while True:
-      index = conversion.find('5')
+      index = conversion.find('4')
       if index != -1:
         # Replace 5 with 0
-        new = conversion.replace('5', '0')
+        new = conversion.replace('4', '0')
         # Find the standing value of the bit that is
         # one order higher than the bit being set back to zero
         int_val = int(new[index - 1])
@@ -69,22 +72,65 @@ def sequence_perm():
     for codon in codons:
       conversion = conversion.replace(str(codon_index), codon)
       codon_index += 1
-    print conversion
+    base += 1
+    yield conversion
 
 def main():
   # Get sequences from file
   data_set = open('promoters_data_clean.txt')
-  data = data_set.read()
-  clean_data = data.replace("\r", "")
-  data = clean_data.replace("\n", "")
+  # Best match and distance
+  best_dist = 8
+  median_word = ""
+  best_match = ""
+  index = ""
+  seq_val = 0
 
   # This will be used to determine when all sequences have been read
-  sequences = get_sequences(data, MOTIF_LEN)
+  while True:
+    data = data_set.readline()
+    seq_val = seq_val + 1
 
-  # Write the DNA words to stdout to be picked up my
-  # hadoop streaming
-  for sequence in sequences:
-#    print '%s\t%d' % (sequence, 1)
+    #Indicates EOF
+    if data == "":
+      break
+    sequences = get_sequences(data, MOTIF_LEN)
+
+    candidates = sequence_perm()
+    # Write the DNA words to stdout to be picked up by
+    # hadoop streaming
+    for candidate in candidates:
+      for sequence in sequences:
+        current = sequence.split('\t')
+        current_seq = current[0]
+        dist = distance(current_seq, candidate)
+        print '%s\t%i\t%s\t%d' % (candidate, seq_val, sequence, dist)
+
+def distance(seq1, seq2):
+  # First, check if the sequences match
+  if seq1 == seq2:
+    return 0
+  
+  len1, len2 = len(seq1), len(seq2)
+  if len1 == 0:
+    return len2
+  if len2 == 0:
+    return len1
+  if len1 < len2:
+    len1, len2 = len2, len1
+    seq1, seq2 = seq2, seq1
+  
+  column = array('L', range(len2 + 1))
+  
+  for x in range(1, len1 + 1):
+    column[0] = x
+    last = x - 1
+    for y in range(1, len2 + 1):
+      old = column[y]
+      cost = int(seq1[x - 1] != seq2[y - 1])
+      column[y] = min(column[y] + 1, column[y - 1] + 1, last + cost)
+      last = old
+  
+  return column[len2]
 
 if __name__ == "__main__":
   main()
