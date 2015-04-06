@@ -18,9 +18,9 @@ def get_sequences(data, length):
   # possible sequence.
   # If the first line is 'tacatgact', then first pass is
   # 'tacatgac' and the second pass is 'acatgact'
-  for char in data:
-    if len(data) > (start + MOTIF_LEN + 1):
-      yield '%s\t%i' % (data[start:length], start)
+  for char in clean_data:
+    if len(clean_data) >= (start + MOTIF_LEN):
+      yield '%s\t%i' % (clean_data[start:length], start)
       start += 1
       length += 1
 
@@ -39,8 +39,9 @@ def sequence_perm():
   # Since there are 5 DNA codons, we need to count up
   # to 8 digits of 4 (count is zero inclusive), so each
   # byte has 5 states.
+  # For prod: 
   while base <= 33333333:
-  # For testing locally: while base <= 00000010:
+  # For testing locally: while base <= 00000100:
     # Pad the base number to get a string sequence
     conversion = str(base).zfill(8)
     index = 0
@@ -76,40 +77,47 @@ def sequence_perm():
     yield conversion
 
 def main():
-  # Get sequences from file
-  data_set = open('promoters_data_clean.txt')
-  # Best match and distance
   best_dist = 8
   median_word = ""
   best_match = ""
   index = ""
+  data = ""
   seq_val = 0
 
-  # This will be used to determine when all sequences have been read
-  while True:
-    data = data_set.readline()
+  # Get the stdin for input sequences
+  dna_file = sys.stdin
+
+  # Get permutation of sequences for possible candidates
+  candidates = sequence_perm()
+
+  # This will be used to determine when all lines have been read
+  for lines in dna_file:
+    # Value to maintain the input sequence number
     seq_val = seq_val + 1
-
-    #Indicates EOF
-    if data == "":
-      break
-    sequences = get_sequences(data, MOTIF_LEN)
-
-    candidates = sequence_perm()
-    # Write the DNA words to stdout to be picked up by
-    # hadoop streaming
+    # For each in the permutation of possible sequences
     for candidate in candidates:
+      # Get the sub-sequences for the current input sequence
+      sequences = get_sequences(lines, MOTIF_LEN)
+      # For each sub-sequence in the current input sequence
       for sequence in sequences:
+        # Split the sub-sequence from the index of the sub-sequence
         current = sequence.split('\t')
+        # Get the current sub-sequence
         current_seq = current[0]
+        # Calculate the distance between the current candidate and the current sub-sequence
         dist = distance(current_seq, candidate)
+        # Print the result to stdout for the reducer, candidate will be the key
         print '%s\t%i\t%s\t%d' % (candidate, seq_val, sequence, dist)
 
+
+# Simple function to calculate distance between two words
 def distance(seq1, seq2):
   # First, check if the sequences match
   if seq1 == seq2:
     return 0
   
+  # Check for the obvious scenarious of totally
+  # oposite lengths
   len1, len2 = len(seq1), len(seq2)
   if len1 == 0:
     return len2
@@ -120,7 +128,8 @@ def distance(seq1, seq2):
     seq1, seq2 = seq2, seq1
   
   column = array('L', range(len2 + 1))
-  
+
+  # Calculate the distance by comparing each byte
   for x in range(1, len1 + 1):
     column[0] = x
     last = x - 1
