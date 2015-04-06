@@ -15,4 +15,4 @@ This code is currently commented out in the reducer, though the mapper still out
 Running:
 From the local filesystem containing the scripts, and with the input file on the hdfs, execut:
 
-hadoop jar /usr/hdp/2.2.0.0-2041/hadoop-mapreduce/hadoop-streaming.jar -files mapper.py,reducer.py,promoters_data_clean.txt -mapper mapper.py -reducer reducer.py -input [path to input on hdfs] -output [path to desired result directory]
+hadoop jar /usr/hdp/2.2.0.0-2041/hadoop-mapreduce/hadoop-streaming.jar -files mapper.py,reducer.py -mapper mapper.py -reducer reducer.py -input [path to input on hdfs] -output [path to desired result directory]

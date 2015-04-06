@@ -57,7 +57,7 @@ def main():
     # Reset count for each candidate
     count = 0
 
-    print "%s\t%s" % (best_word, best_count)
+  print "%s\t%s" % (best_word, best_count)
 
   # This is for the more complicated version of the calculation.
   # It stores all relevant info and outputs the best match to the motif
@@ -65,7 +65,10 @@ def main():
   # works because the hadoop system run out of physical memory, but it should
   # work, or almost work.
 '''
+  # For the current motif candidate and its relevant info
+  # in each input sequence grouped by motif candidates
   for current, group in groupby(dataset, itemgetter(0)):
+    # Get the metadata from each input object
     meta_list = get_metadata(group)
     for seq_num, info in groupby(meta_list, itemgetter(0)):
       for match, stats in info:

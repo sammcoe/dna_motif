@@ -80,6 +80,7 @@ def main():
   best_dist = 8
   median_word = ""
   best_match = ""
+  best_seq = 0
   index = ""
   data = ""
   seq_val = 0
@@ -88,7 +89,7 @@ def main():
   dna_file = sys.stdin
 
   # Get permutation of sequences for possible candidates
-  candidates = sequence_perm()
+  candidates = list(sequence_perm())
 
   # This will be used to determine when all lines have been read
   for lines in dna_file:
@@ -106,8 +107,18 @@ def main():
         current_seq = current[0]
         # Calculate the distance between the current candidate and the current sub-sequence
         dist = distance(current_seq, candidate)
-        # Print the result to stdout for the reducer, candidate will be the key
-        print '%s\t%i\t%s\t%d' % (candidate, seq_val, sequence, dist)
+        if dist < best_dist:
+          best_dist = dist
+          best_match = current_seq
+          median_word = candidate
+          best_seq = seq_val
+          index = current[1]
+      # Print the result to stdout for the reducer, candidate will be the key
+      print '%s\t%s\t%s\t%s\t%s' % (median_word, best_seq, best_match, index, best_dist)
+      best_dist = 8
+      median_word = ""
+      best_match = ""
+      index = 0
 
 
 # Simple function to calculate distance between two words
